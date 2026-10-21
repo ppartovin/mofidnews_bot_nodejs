@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "title": "حل تمرین فصل دوم",
+    "subject": "ریاضی",
+    "description": "تمرین‌های ۱ تا ۱۰ صفحه ۴۵ کتاب حل شود.",
+    "due_date": "2026-09-28",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "id": 2,
+    "title": "خلاصه‌نویسی درس سوم",
+    "subject": "علوم",
+    "description": "یک خلاصه‌ی کوتاه از درس سوم آماده شود.",
+    "due_date": "2026-09-30",
+    "priority": "medium",
+    "status": "pending"
+  },
+  {
+    "id": 3,
+    "title": "تحویل پروژه‌ی کلاسی",
+    "subject": "برنامه‌نویسی",
+    "description": "پروژه‌ی مدیریت فهرست کارها تکمیل و ارسال شود.",
+    "due_date": "2026-10-02",
+    "priority": "high",
+    "status": "in_progress"
+  }
+]
