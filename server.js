@@ -17,6 +17,7 @@ const baseUrl = `https://tapi.bale.ai/bot${token}`;
 const messageLimit = Number.parseInt(process.env.RATE_LIMIT || "0", 10);
 const errorReply =
 	"متأسفانه در پردازش پیام شما خطایی رخ داد. لطفاً دوباره تلاش کنید.";
+const tooLongReply = "متن شما بیش از حد طولانی است. حداکثر طول مجاز ۱۰۰۰ کاراکتر است.";
 const rateReply =
 	"شما به محدودیت ارسال پیام رسیده‌اید. لطفاً بعداً دوباره تلاش کنید.";
 
@@ -63,6 +64,16 @@ app.post(`/webhook/${bale_secret}`, limiter, async (req, res) => {
 		message.text != null
 	) {
 		const chatId = message.chat.id;
+		if (
+			typeof message.text === "string" &&
+			Array.from(message.text).length > 1000
+		) {
+			await bale("sendMessage", {
+				chat_id: chatId,
+				text: tooLongReply,
+			}).catch((error) => console.error("Could not send length error:", error.message));
+			return res.status(200).send("OK");
+		}
 		let processingId;
 		try {
 			processingId = (
