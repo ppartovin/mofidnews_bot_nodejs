@@ -4,6 +4,7 @@ const { generateReply } = require("./ai_client");
 const { loadData } = require("./data_loader");
 
 const token = process.env.TOKEN;
+const bale_secret=process.env.BALE_TOKEN;
 if (!token) throw new Error("TOKEN environment variable is required");
 if (!process.env.AI_API_KEY || !process.env.AI_MODEL)
 	throw new Error(
@@ -39,11 +40,7 @@ const limiter = rateLimit({
 		!req.body?.message?.text ||
 		!req.body?.message?.chat?.id,
 	keyGenerator: (req) =>
-		String(
-			req.body?.message?.from?.id ||
-				req.body?.message?.chat?.id ||
-				req.ip,
-		),
+		String(req.body.message.chat.id),
 	handler: async (req, res) => {
 		const chatId = req.body?.message?.chat?.id;
 		if (chatId)
@@ -57,7 +54,7 @@ const limiter = rateLimit({
 	legacyHeaders: false,
 });
 
-app.post("/webhook", limiter, async (req, res) => {
+app.post(`/webhook/${bale_secret}`, limiter, async (req, res) => {
 	const message = req.body?.message;
 	if (
 		message &&
