@@ -2,6 +2,7 @@ const express = require("express");
 const rateLimit = require("express-rate-limit");
 const { generateReply } = require("./ai_client");
 const { loadData } = require("./data_loader");
+const { jsonBodyParser, jsonParseErrorHandler } = require("./json_middleware");
 
 const token = process.env.TOKEN;
 const bale_secret=process.env.BALE_SECRETE;
@@ -12,7 +13,8 @@ if (!process.env.AI_API_KEY || !process.env.AI_MODEL)
 	);
 
 const app = express();
-app.use(express.json({ limit: "1mb" }));
+app.use(jsonBodyParser);
+app.use(jsonParseErrorHandler);
 const baseUrl = `https://tapi.bale.ai/bot${token}`;
 const messageLimit = Number.parseInt(process.env.RATE_LIMIT || "0", 10);
 const errorReply =
