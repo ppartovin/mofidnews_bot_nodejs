@@ -1,3 +1,5 @@
 /short_memori.json
 /.short_memori.*.tmp
+/long_memori.json
+/.long_memori.*.tmp
 /tests/

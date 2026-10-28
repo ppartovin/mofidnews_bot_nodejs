@@ -3,6 +3,7 @@ const rateLimit = require("express-rate-limit");
 const { generateReply } = require("./ai_client");
 const { loadData } = require("./data_loader");
 const { getMemory, saveMemory, withUserQueue } = require("./memory_store");
+const { getLongMemory, saveLongMemoryUpdates } = require("./long_memory_store");
 const { jsonBodyParser, jsonParseErrorHandler } = require("./json_middleware");
 
 const token = process.env.TOKEN;
@@ -93,7 +94,9 @@ app.post(`/webhook/${bale_secret}`, limiter, async (req, res) => {
 		try {
 			const generateAndStore = async () => {
 				let previousMemory = "";
+				let longMemory = {};
 				let canSaveMemory = userId != null;
+				let canSaveLongMemory = userId != null;
 				if (canSaveMemory) {
 					try {
 						previousMemory = await getMemory(userId);
@@ -102,13 +105,28 @@ app.post(`/webhook/${bale_secret}`, limiter, async (req, res) => {
 						console.error("Could not load short-term memory:", error.message);
 					}
 				}
+				if (canSaveLongMemory) {
+					try {
+						longMemory = await getLongMemory(userId);
+					} catch (error) {
+						canSaveLongMemory = false;
+						console.error("Could not load long-term memory:", error.message);
+					}
+				}
 
-				const result = await generateReply(message.text, loadData(), previousMemory);
+				const result = await generateReply(message.text, loadData(), previousMemory, longMemory);
 				if (canSaveMemory && result.memory !== null) {
 					try {
 						await saveMemory(userId, result.memory);
 					} catch (error) {
 						console.error("Could not save short-term memory:", error.message);
+					}
+				}
+				if (canSaveLongMemory && result.longMemoryUpdates) {
+					try {
+						await saveLongMemoryUpdates(userId, result.longMemoryUpdates);
+					} catch (error) {
+						console.error("Could not save long-term memory:", error.message);
 					}
 				}
 				return result.reply;
