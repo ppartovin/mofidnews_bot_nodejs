@@ -2,6 +2,7 @@ const express = require("express");
 const rateLimit = require("express-rate-limit");
 const { generateReply } = require("./ai_client");
 const { loadData } = require("./data_loader");
+const { getMemory, saveMemory, withUserQueue } = require("./memory_store");
 const { jsonBodyParser, jsonParseErrorHandler } = require("./json_middleware");
 
 const token = process.env.TOKEN;
@@ -66,6 +67,7 @@ app.post(`/webhook/${bale_secret}`, limiter, async (req, res) => {
 		message.text != null
 	) {
 		const chatId = message.chat.id;
+		const userId = message.from?.id;
 		if (
 			typeof message.text === "string" &&
 			Array.from(message.text).length > 1000
@@ -89,7 +91,31 @@ app.post(`/webhook/${bale_secret}`, limiter, async (req, res) => {
 		}
 		let reply;
 		try {
-			reply = await generateReply(message.text, loadData());
+			const generateAndStore = async () => {
+				let previousMemory = "";
+				let canSaveMemory = userId != null;
+				if (canSaveMemory) {
+					try {
+						previousMemory = await getMemory(userId);
+					} catch (error) {
+						canSaveMemory = false;
+						console.error("Could not load short-term memory:", error.message);
+					}
+				}
+
+				const result = await generateReply(message.text, loadData(), previousMemory);
+				if (canSaveMemory && result.memory !== null) {
+					try {
+						await saveMemory(userId, result.memory);
+					} catch (error) {
+						console.error("Could not save short-term memory:", error.message);
+					}
+				}
+				return result.reply;
+			};
+			reply = userId != null
+				? await withUserQueue(userId, generateAndStore)
+				: await generateAndStore();
 		} catch (error) {
 			console.error("Could not generate reply:", error);
 			reply = errorReply;
